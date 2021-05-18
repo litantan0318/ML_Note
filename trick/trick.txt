@@ -1,0 +1,73 @@
+tensorflow api:
+    stack concat的区别
+        concat：输入一个列表的tensor，选中一个维度，将他们在这个维度拼接起来
+            shape1: [2, 3, 4], shape2: [2, 1, 4], shape3: [2, 4, 4]
+            以axis=1拼接，shape=[2, 8, 4]
+            除了axis的其他维度必须相同
+        stack：输入一个列表的tensor，将生成一个维度高1的tensor，axis表示在哪里升维，默认在0维度，就是最前
+            shape1: [2, 3, 4], shape2: [2, 3, 4], shape3: [2, 3, 4]
+            以axis=1堆叠，shape=[3，2, 3, 4]
+            以axis=1堆叠，shape=[2, 3, 3, 4]
+            所有元素必须维度相同，且各维度相同
+    tile repeat的区别
+        tile：输入第一个tensor作为input，第二个tensor作为repeat倍数，第二个tensor一般为一个一维数组，长度与第一个的维度一样，
+            第i个元素代表input的第i维重复几次
+        repeat:input(tensor), repeats(一维tensor), axis(int or None), input[axis]的长度等于repeats的长度
+            如果axis不是None，对input的第axis维进行repeat，第i个元素重复repeats[i]次
+            如果axis是None，把input展开为一维数组然后操作
+    tensor的broadcast（如 a * b）
+        1. 形状相同不broadcast, 一方是标量直接全部广播
+        2. 对于shape_a shape_b从最后一个维度对比，如果两者该维度相同或者某一方维度为1，则广播，剩余维度保持。例：
+            A      (4d array):  8 x 1 x 6 x 1
+            B      (3d array):      7 x 1 x 5
+            Result (4d array):  8 x 7 x 6 x 5
+    gather gather_nd用法与区别
+        todo
+    t.shape t.shape() t.get_shape() tf.shape(t)的区别
+        1.t.shape 与 t.get_shape()完全等同，都是获取静态形状。tf.shape(t)返回动态形状。前者返回tf.TensorShape对象后者返回一个tensor
+        2.在reshape时，shape参数必须是一个数组或一个tensor，不接受混合，使用pack或者tile完成结合，见https://groups.google.com/a/tensorflow.org/g/discuss/c/BlguDbTxCAk?pli=1
+estimator and keras:
+    estimator head用法
+        todo
+    使用generator生产模拟数据
+        todo
+    input_fn使用匿名函数
+        input_fn返回dataset，使用lambda: input_fn传入，中间不能经过包装
+        以下几种方式会失败：
+            wrap_input_fn: return input_fn(), lambda: wrap_input_fn
+            wrap_input_fn: return lambda: input_fn(), wrap_input_fn()
+        以下会成功
+            wrap_input_fn: return input_fn, wrap_input_fn()
+            lambda: input_fn()
+    featurecolumn：
+        embedding_column必定会combine起来，无法用来做细致操作，需要用numeric类的特征在模型中做
+tf2与tf1或版本迭代会引发的问题
+    embeddinglookup等函数在分布式的表现
+        todo
+    estimator上的optimizer使用方法
+        todo
+    layer的使用方法
+        todo
+    eager excution带来的差别
+        todo
+算法与模型理解
+    embedding的操作区别：
+        从pnn的论文中归纳。如有一组embedding向量，代表各个特征的embedding，如果先加和再求模有很强的学习能力如果先求模再加和，
+        则基本没有学习能力。先求和时，是向量运算，收到embedding夹角影响，最后取模，得到最终评估。先取模时，得到的是各个向量模长，
+        是标量相加，模长的和拟合输出，可以理解为类似线性回归，embedding的各个维度参数相当于是秩1，是无效的参数。
+        注意到FM的简化算法就是两者相减。主要学习项在第一项。若允许特征自己交叉，则后一项可以省略。
+    loss相加：
+        todo
+    参数的有效性：
+        todo
+    优化器影响：
+        模型din，使用item_embedding同时作为value与key向量，attention后直接与query向量再次点乘。
+        embedding_size=64,history_len=50,词典大小500，his中有query-1<id<query+1算作label=1
+        使用adam，
+            lr=0.01，beta1=0.9，10000step：auc=0.933
+            lr=0.01，beta1=0.9，100000step：auc_max=0.954, auc_last=0.877 #为何会过拟合，数据是生成的，理论上无论如何都不会过拟合
+            lr=0.001，beta1=0.9，50000step：auc=0.999
+        使用sgd，
+            lr=0.01，10000step：auc=0.499
+            lr=0.1，10000step：auc=0.500
+            lr=0.001,

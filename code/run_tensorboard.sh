@@ -1,0 +1,1 @@
+tensorboard --logdir=./test_model --port=5488 --bind_all
