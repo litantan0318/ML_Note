@@ -58,7 +58,7 @@ def generate_attention_feature(his_num=20, noise=0.2, his_len_rate=0.5, len_sigm
     return features, label
 
 
-def generate_easy_attention_feature(his_num=100, noise=0.2):
+def generate_easy_attention_feature(his_num=100, noise=0.2, match_range=1):
     histories = []
     # query = random.randint(0, 500)
     query = random.randint(0, 10)
@@ -66,7 +66,7 @@ def generate_easy_attention_feature(his_num=100, noise=0.2):
     for i in range(his_num):
         # this_his = random.randint(0, 500)
         this_his = random.randint(0, 10)
-        if query + 1 >= this_his >= query - 1:
+        if query + match_range >= this_his >= query - match_range:
             match = 1
         histories.append(this_his)
     label = match
@@ -308,6 +308,40 @@ def test_din_input_fn(batch_size=128, his_num=2, his_len_rate=1.0, noise=0.5, le
     dataset = dataset.batch(batch_size)
 
     return dataset
+
+def test_input_fn(batch_size=128, his_num=1, his_len_rate=1.0, noise=0.0, len_sigma=0.0):
+    output_signature = [tf.TensorSpec(shape=(), dtype=tf.int32),
+                        tf.TensorSpec(shape=(), dtype=tf.int32),
+                        tf.TensorSpec(shape=(his_num,), dtype=tf.int32)]
+
+    def rdd_generator():
+        while True:
+            yield_list = []
+            feature_list, label = generate_easy_attention_feature(
+                his_num=his_num,
+                noise=noise,
+                match_range=2
+                )
+            yield_list.append(label)
+            yield tuple(yield_list + feature_list)
+
+    def _parse_line(*line):
+        features = {}
+        tensors = list(line)
+        label = tensors.pop(0)
+        feature_names = ["din_query_feature", "din_his_feature"]
+        for index, name in enumerate(feature_names):
+            features[name] = line[index + 1]
+        return features, label
+
+    dataset = tf.data.Dataset.from_generator(
+        rdd_generator, output_signature=tuple(output_signature))
+
+    dataset = dataset.map(_parse_line)
+    dataset = dataset.batch(batch_size)
+
+    return dataset
+
 
 if __name__ == "__main__":
     tf.compat.v1.enable_eager_execution()

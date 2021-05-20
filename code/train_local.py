@@ -28,6 +28,9 @@ class ModelManager:
     
     def build_model(self, feature_cols_fn=None):
         model_fn = None
+        if self.name == "test":
+            from notes.test_op.model import build_model_fn, default_feature_cols_fn
+            model_fn = self._gen_model(build_model_fn, feature_cols_fn, default_feature_cols_fn)
         if self.name == "fm":
             from notes.FM.model import build_model_fn, default_feature_cols_fn
             model_fn = self._gen_model(build_model_fn, feature_cols_fn, default_feature_cols_fn)
@@ -58,6 +61,8 @@ class ModelManager:
         return model_fn
 
     def build_input_fn(self):
+        if self.name == "test":
+            return inputs.test_input_fn
         if self.name == "fm":
             return inputs.test_fm_input_fn
         if self.name == "ffm":
@@ -78,6 +83,15 @@ class ModelManager:
             return inputs.test_din_input_fn
 
     def gen_params(self):
+        if self.name == "test":
+            if self.params is None:
+                self.params = self.default_params
+                self.params["embedding_size"] = 128
+                self.params["learning_rate"] = 0.01
+                # self.params["beta1"] = 0.99
+                self.params["max_step"] = 10000
+                self.params["use_mlp"] = False
+                self.params["his_len"] = 1
         if self.name in ("fm", "ffm"):
             if self.params is None:
                 self.params = self.default_params
@@ -133,7 +147,7 @@ class ModelManager:
                 self.params = self.default_params
 
 
-manager = ModelManager("din")
+manager = ModelManager("test")
 
 
 def train(cf):

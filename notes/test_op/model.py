@@ -9,18 +9,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-class CustomerizeAttentionLayer(keras.layers.Layer):
-    def __init__(self, units=32):
-        super(CustomerizeAttentionLayer, self).__init__()
 
-    def build(self, input_shape):
-        pass
-
-    def call(self, inputs, **kwargs):
-        pass
-
-    def compute_output_shape(self, input_shape):
-        pass
 
 def default_feature_cols_fn(params):
     feature_map = {}
